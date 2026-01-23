@@ -1,20 +1,21 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, Pill, Loader2 } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { loginUser } from '@/redux/slices/authSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { motion } from "framer-motion";
+import { Eye, EyeOff, Pill, Loader2 } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { loginUser } from "@/redux/slices/authSlice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface LoginFormData {
   email: string;
   password: string;
 }
-
+const api = await import.meta.env.SERVER_URI;
 const LoginPage = () => {
+  console.log(api);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
@@ -29,7 +30,7 @@ const LoginPage = () => {
   const onSubmit = async (data: LoginFormData) => {
     const result = await dispatch(loginUser(data));
     if (loginUser.fulfilled.match(result)) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
   };
 
@@ -58,8 +59,8 @@ const LoginPage = () => {
               <span className="text-primary">Pharmacy Operations</span>
             </h2>
             <p className="text-lg text-sidebar-foreground/70 max-w-md">
-              Manage inventory, track sales, and generate reports with our comprehensive
-              pharmacy management solution.
+              Manage inventory, track sales, and generate reports with our
+              comprehensive pharmacy management solution.
             </p>
           </motion.div>
 
@@ -111,17 +112,19 @@ const LoginPage = () => {
                 id="email"
                 type="email"
                 placeholder="you@pharmacy.com"
-                {...register('email', {
-                  required: 'Email is required',
+                {...register("email", {
+                  required: "Email is required",
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
+                    message: "Invalid email address",
                   },
                 })}
-                className={errors.email ? 'border-destructive' : ''}
+                className={errors.email ? "border-destructive" : ""}
               />
               {errors.email && (
-                <p className="text-destructive text-sm">{errors.email.message}</p>
+                <p className="text-destructive text-sm">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -130,27 +133,35 @@ const LoginPage = () => {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  {...register('password', {
-                    required: 'Password is required',
+                  {...register("password", {
+                    required: "Password is required",
                     minLength: {
                       value: 6,
-                      message: 'Password must be at least 6 characters',
+                      message: "Password must be at least 6 characters",
                     },
                   })}
-                  className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                  className={
+                    errors.password ? "border-destructive pr-10" : "pr-10"
+                  }
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-destructive text-sm">{errors.password.message}</p>
+                <p className="text-destructive text-sm">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -171,7 +182,7 @@ const LoginPage = () => {
                   Signing in...
                 </>
               ) : (
-                'Sign in'
+                "Sign in"
               )}
             </Button>
           </form>

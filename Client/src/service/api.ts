@@ -1,10 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
-
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: import.meta.env.SERVER_URI,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -52,8 +50,8 @@ export const authAPI = {
 export const medicinesAPI = {
   getAll: () => api.get('/medicines'),
   getById: (id: string) => api.get(`/medicines/${id}`),
-  create: (data: any) => api.post('/medicines', data),
-  update: (id: string, data: any) => api.put(`/medicines/${id}`, data),
+  create: (data) => api.post('/medicines', data),
+  update: (id: string, data) => api.put(`/medicines/${id}`, data),
   delete: (id: string) => api.delete(`/medicines/${id}`),
 };
 
@@ -61,7 +59,7 @@ export const medicinesAPI = {
 export const salesAPI = {
   getAll: () => api.get('/sales'),
   getById: (id: string) => api.get(`/sales/${id}`),
-  create: (data: any) => api.post('/sales', data),
+  create: (data) => api.post('/sales', data),
   getDaily: () => api.get('/sales/daily'),
   getMonthly: () => api.get('/sales/monthly'),
 };
@@ -70,8 +68,8 @@ export const salesAPI = {
 export const suppliersAPI = {
   getAll: () => api.get('/suppliers'),
   getById: (id: string) => api.get(`/suppliers/${id}`),
-  create: (data: any) => api.post('/suppliers', data),
-  update: (id: string, data: any) => api.put(`/suppliers/${id}`, data),
+  create: (data) => api.post('/suppliers', data),
+  update: (id: string, data) => api.put(`/suppliers/${id}`, data),
   delete: (id: string) => api.delete(`/suppliers/${id}`),
 };
 
@@ -87,8 +85,8 @@ export const reportsAPI = {
 export const usersAPI = {
   getAll: () => api.get('/users'),
   getById: (id: string) => api.get(`/users/${id}`),
-  create: (data: any) => api.post('/users', data),
-  update: (id: string, data: any) => api.put(`/users/${id}`, data),
+  create: (data) => api.post('/users', data),
+  update: (id: string, data) => api.put(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
 };
 
