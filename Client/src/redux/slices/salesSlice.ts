@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { salesAPI } from '@/service/api';
 
 export interface CartItem {
   medicineId: string;
@@ -10,6 +11,7 @@ export interface CartItem {
 
 export interface Sale {
   id: string;
+  _id?: string;
   items: CartItem[];
   totalAmount: number;
   customerId?: string;
@@ -26,51 +28,23 @@ interface SalesState {
   error: string | null;
 }
 
-const mockSales: Sale[] = [
-  {
-    id: '1',
-    items: [
-      { medicineId: '1', medicineName: 'Paracetamol 500mg', quantity: 2, unitPrice: 5.00, totalPrice: 10.00 },
-      { medicineId: '6', medicineName: 'Cetirizine 10mg', quantity: 1, unitPrice: 5.50, totalPrice: 5.50 },
-    ],
-    totalAmount: 15.50,
-    customerName: 'Walk-in Customer',
-    createdAt: new Date().toISOString(),
-    createdBy: 'John Pharmacist',
-  },
-  {
-    id: '2',
-    items: [
-      { medicineId: '4', medicineName: 'Metformin 500mg', quantity: 3, unitPrice: 7.50, totalPrice: 22.50 },
-    ],
-    totalAmount: 22.50,
-    customerName: 'Jane Doe',
-    createdAt: new Date().toISOString(),
-    createdBy: 'John Pharmacist',
-  },
-];
-
 const initialState: SalesState = {
   cart: [],
-  sales: mockSales,
-  todaySales: 38.00,
+  sales: [],
+  todaySales: 0,
   isLoading: false,
   error: null,
 };
 
 export const createSale = createAsyncThunk(
   'sales/create',
-  async (sale: Omit<Sale, 'id' | 'createdAt'>, { rejectWithValue }) => {
+  async (sale: Omit<Sale, 'id' | '_id' | 'createdAt'>, { rejectWithValue }) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const newSale: Sale = {
-        ...sale,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-      };
-      return newSale;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+      const response = await salesAPI.create(sale);
+      return response.data.sale || response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to create sale';
+      return rejectWithValue(message);
     }
   }
 );
@@ -79,10 +53,24 @@ export const fetchSales = createAsyncThunk(
   'sales/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockSales;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+      const response = await salesAPI.getAll();
+      return response.data.sales || response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to fetch sales';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const fetchDailySales = createAsyncThunk(
+  'sales/fetchDaily',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await salesAPI.getDaily();
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to fetch daily sales';
+      return rejectWithValue(message);
     }
   }
 );
@@ -118,19 +106,33 @@ const salesSlice = createSlice({
     builder
       .addCase(createSale.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(createSale.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.sales.unshift(action.payload);
-        state.todaySales += action.payload.totalAmount;
+        const sale = { ...action.payload, id: action.payload._id || action.payload.id };
+        state.sales.unshift(sale);
+        state.todaySales += sale.totalAmount;
         state.cart = [];
       })
       .addCase(createSale.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
+      .addCase(fetchSales.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
       .addCase(fetchSales.fulfilled, (state, action) => {
-        state.sales = action.payload;
+        state.isLoading = false;
+        state.sales = action.payload.map((s) => ({ ...s, id: s._id || s.id }));
+      })
+      .addCase(fetchSales.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchDailySales.fulfilled, (state, action) => {
+        state.todaySales = action.payload.total || action.payload.todaySales || 0;
       });
   },
 });

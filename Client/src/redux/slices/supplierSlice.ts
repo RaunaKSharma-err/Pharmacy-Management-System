@@ -1,13 +1,15 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { suppliersAPI } from '@/service/api';
 
 export interface Supplier {
   id: string;
+  _id?: string;
   name: string;
   email: string;
   phone: string;
   address: string;
   contactPerson: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface SupplierState {
@@ -17,38 +19,8 @@ interface SupplierState {
   error: string | null;
 }
 
-const mockSuppliers: Supplier[] = [
-  {
-    id: '1',
-    name: 'PharmaCo Ltd',
-    email: 'orders@pharmaco.com',
-    phone: '+1 234-567-8901',
-    address: '123 Pharma Street, Medical District, NY 10001',
-    contactPerson: 'Robert Johnson',
-    createdAt: '2024-01-01',
-  },
-  {
-    id: '2',
-    name: 'MediSupply Inc',
-    email: 'contact@medisupply.com',
-    phone: '+1 234-567-8902',
-    address: '456 Health Ave, Healthcare Hub, CA 90001',
-    contactPerson: 'Sarah Williams',
-    createdAt: '2024-01-15',
-  },
-  {
-    id: '3',
-    name: 'HealthFirst Pharma',
-    email: 'info@healthfirst.com',
-    phone: '+1 234-567-8903',
-    address: '789 Wellness Blvd, Medical Park, TX 75001',
-    contactPerson: 'Michael Brown',
-    createdAt: '2024-02-01',
-  },
-];
-
 const initialState: SupplierState = {
-  suppliers: mockSuppliers,
+  suppliers: [],
   selectedSupplier: null,
   isLoading: false,
   error: null,
@@ -58,39 +30,37 @@ export const fetchSuppliers = createAsyncThunk(
   'suppliers/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockSuppliers;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+      const response = await suppliersAPI.getAll();
+      return response.data.suppliers || response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to fetch suppliers';
+      return rejectWithValue(message);
     }
   }
 );
 
 export const addSupplier = createAsyncThunk(
   'suppliers/add',
-  async (supplier: Omit<Supplier, 'id' | 'createdAt'>, { rejectWithValue }) => {
+  async (supplier: Omit<Supplier, 'id' | '_id' | 'createdAt'>, { rejectWithValue }) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const newSupplier: Supplier = {
-        ...supplier,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-      };
-      return newSupplier;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+      const response = await suppliersAPI.create(supplier);
+      return response.data.supplier || response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to add supplier';
+      return rejectWithValue(message);
     }
   }
 );
 
 export const updateSupplier = createAsyncThunk(
   'suppliers/update',
-  async (supplier: Supplier, { rejectWithValue }) => {
+  async ({ id, data }: { id: string; data: Partial<Supplier> }, { rejectWithValue }) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return supplier;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+      const response = await suppliersAPI.update(id, data);
+      return response.data.supplier || response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to update supplier';
+      return rejectWithValue(message);
     }
   }
 );
@@ -99,10 +69,11 @@ export const deleteSupplier = createAsyncThunk(
   'suppliers/delete',
   async (id: string, { rejectWithValue }) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await suppliersAPI.delete(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to delete supplier';
+      return rejectWithValue(message);
     }
   }
 );
@@ -119,26 +90,53 @@ const supplierSlice = createSlice({
     builder
       .addCase(fetchSuppliers.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(fetchSuppliers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.suppliers = action.payload;
+        state.suppliers = action.payload.map((s) => ({ ...s, id: s._id || s.id }));
       })
       .addCase(fetchSuppliers.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
+      .addCase(addSupplier.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(addSupplier.fulfilled, (state, action) => {
-        state.suppliers.push(action.payload);
+        state.isLoading = false;
+        const supplier = { ...action.payload, id: action.payload._id || action.payload.id };
+        state.suppliers.push(supplier);
+      })
+      .addCase(addSupplier.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateSupplier.pending, (state) => {
+        state.isLoading = true;
       })
       .addCase(updateSupplier.fulfilled, (state, action) => {
-        const index = state.suppliers.findIndex(s => s.id === action.payload.id);
+        state.isLoading = false;
+        const updated = { ...action.payload, id: action.payload._id || action.payload.id };
+        const index = state.suppliers.findIndex(s => s.id === updated.id || s._id === updated._id);
         if (index !== -1) {
-          state.suppliers[index] = action.payload;
+          state.suppliers[index] = updated;
         }
       })
+      .addCase(updateSupplier.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(deleteSupplier.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(deleteSupplier.fulfilled, (state, action) => {
-        state.suppliers = state.suppliers.filter(s => s.id !== action.payload);
+        state.isLoading = false;
+        state.suppliers = state.suppliers.filter(s => s.id !== action.payload && s._id !== action.payload);
+      })
+      .addCase(deleteSupplier.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });

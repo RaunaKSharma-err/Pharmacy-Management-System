@@ -13,9 +13,8 @@ interface LoginFormData {
   email: string;
   password: string;
 }
-const api = await import.meta.env.SERVER_URI;
+
 const LoginPage = () => {
-  console.log(api);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
@@ -29,6 +28,7 @@ const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     const result = await dispatch(loginUser(data));
+
     if (loginUser.fulfilled.match(result)) {
       navigate("/dashboard");
     }
@@ -175,7 +175,11 @@ const LoginPage = () => {
               </a>
             </div>
 
-            <Button type="submit" className="w-full h-11" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-[#27AA83]"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -188,7 +192,10 @@ const LoginPage = () => {
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Demo: Use any email/password to login
+            New to pharma?{" "}
+            <a href="/register" className="text-[#0a8661] font-bold">
+              Sign Up
+            </a>
           </p>
         </motion.div>
       </div>

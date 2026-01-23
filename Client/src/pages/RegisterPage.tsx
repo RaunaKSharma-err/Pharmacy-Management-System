@@ -1,28 +1,28 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, Pill, Loader2, ArrowLeft } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { registerUser } from '@/redux/slices/authSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { motion } from "framer-motion";
+import { Eye, EyeOff, Pill, Loader2, ArrowLeft } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { registerUser } from "@/redux/slices/authSlice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 interface RegisterFormData {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
-  role: 'admin' | 'staff';
+  role: "admin" | "staff";
 }
 
 const RegisterPage = () => {
@@ -39,11 +39,11 @@ const RegisterPage = () => {
     formState: { errors },
   } = useForm<RegisterFormData>({
     defaultValues: {
-      role: 'staff',
+      role: "staff",
     },
   });
 
-  const password = watch('password');
+  const password = watch("password");
 
   const onSubmit = async (data: RegisterFormData) => {
     const result = await dispatch(
@@ -52,14 +52,14 @@ const RegisterPage = () => {
         email: data.email,
         password: data.password,
         role: data.role,
-      })
+      }),
     );
     if (registerUser.fulfilled.match(result)) {
       toast({
-        title: 'Success!',
-        description: 'User registered successfully.',
+        title: "Success!",
+        description: "User registered successfully.",
       });
-      navigate('/users');
+      navigate("/users");
     }
   };
 
@@ -85,7 +85,9 @@ const RegisterPage = () => {
           </div>
           <div>
             <h1 className="text-2xl font-display font-bold">Register User</h1>
-            <p className="text-sm text-muted-foreground">Add a new staff member</p>
+            <p className="text-sm text-muted-foreground">
+              Add a new staff member
+            </p>
           </div>
         </div>
 
@@ -105,11 +107,14 @@ const RegisterPage = () => {
             <Input
               id="name"
               placeholder="John Doe"
-              {...register('name', {
-                required: 'Name is required',
-                minLength: { value: 2, message: 'Name must be at least 2 characters' },
+              {...register("name", {
+                required: "Name is required",
+                minLength: {
+                  value: 2,
+                  message: "Name must be at least 2 characters",
+                },
               })}
-              className={errors.name ? 'border-destructive' : ''}
+              className={errors.name ? "border-destructive" : ""}
             />
             {errors.name && (
               <p className="text-destructive text-sm">{errors.name.message}</p>
@@ -122,14 +127,14 @@ const RegisterPage = () => {
               id="email"
               type="email"
               placeholder="john@pharmacy.com"
-              {...register('email', {
-                required: 'Email is required',
+              {...register("email", {
+                required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
+                  message: "Invalid email address",
                 },
               })}
-              className={errors.email ? 'border-destructive' : ''}
+              className={errors.email ? "border-destructive" : ""}
             />
             {errors.email && (
               <p className="text-destructive text-sm">{errors.email.message}</p>
@@ -140,7 +145,9 @@ const RegisterPage = () => {
             <Label htmlFor="role">Role</Label>
             <Select
               defaultValue="staff"
-              onValueChange={(value) => setValue('role', value as 'admin' | 'staff')}
+              onValueChange={(value) =>
+                setValue("role", value as "admin" | "staff")
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />
@@ -157,24 +164,35 @@ const RegisterPage = () => {
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                {...register('password', {
-                  required: 'Password is required',
-                  minLength: { value: 6, message: 'Password must be at least 6 characters' },
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Password must be at least 6 characters",
+                  },
                 })}
-                className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                className={
+                  errors.password ? "border-destructive pr-10" : "pr-10"
+                }
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
             {errors.password && (
-              <p className="text-destructive text-sm">{errors.password.message}</p>
+              <p className="text-destructive text-sm">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
@@ -184,25 +202,32 @@ const RegisterPage = () => {
               id="confirmPassword"
               type="password"
               placeholder="••••••••"
-              {...register('confirmPassword', {
-                required: 'Please confirm password',
-                validate: (value) => value === password || 'Passwords do not match',
+              {...register("confirmPassword", {
+                required: "Please confirm password",
+                validate: (value) =>
+                  value === password || "Passwords do not match",
               })}
-              className={errors.confirmPassword ? 'border-destructive' : ''}
+              className={errors.confirmPassword ? "border-destructive" : ""}
             />
             {errors.confirmPassword && (
-              <p className="text-destructive text-sm">{errors.confirmPassword.message}</p>
+              <p className="text-destructive text-sm">
+                {errors.confirmPassword.message}
+              </p>
             )}
           </div>
 
-          <Button type="submit" className="w-full h-11" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full h-11 bg-[#27AA83]"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Registering...
               </>
             ) : (
-              'Register User'
+              "Register User"
             )}
           </Button>
         </form>

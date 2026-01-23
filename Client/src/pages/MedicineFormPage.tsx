@@ -1,30 +1,34 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
-import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { addMedicine, updateMedicine, Medicine } from '@/redux/slices/medicineSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useNavigate, useParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { motion } from "framer-motion";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks";
+import {
+  addMedicine,
+  updateMedicine,
+  Medicine,
+} from "@/redux/slices/medicineSlice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 const categories = [
-  'Pain Relief',
-  'Antibiotics',
-  'Gastrointestinal',
-  'Diabetes',
-  'Allergy',
-  'Cardiovascular',
-  'Vitamins',
-  'Skin Care',
+  "Pain Relief",
+  "Antibiotics",
+  "Gastrointestinal",
+  "Diabetes",
+  "Allergy",
+  "Cardiovascular",
+  "Vitamins",
+  "Skin Care",
 ];
 
 interface MedicineFormData {
@@ -62,7 +66,7 @@ const MedicineFormPage = () => {
           name: existingMedicine.name,
           category: existingMedicine.category,
           batchNumber: existingMedicine.batchNumber,
-          expiryDate: existingMedicine.expiryDate.split('T')[0],
+          expiryDate: existingMedicine.expiryDate.split("T")[0],
           quantity: existingMedicine.quantity,
           purchasePrice: existingMedicine.purchasePrice,
           sellingPrice: existingMedicine.sellingPrice,
@@ -71,35 +75,32 @@ const MedicineFormPage = () => {
       : undefined,
   });
 
-  const watchedCategory = watch('category');
-  const watchedSupplier = watch('supplierId');
+  const watchedCategory = watch("category");
+  const watchedSupplier = watch("supplierId");
 
   const onSubmit = async (data: MedicineFormData) => {
     const supplier = suppliers.find((s) => s.id === data.supplierId);
     const medicineData = {
       ...data,
-      supplierName: supplier?.name || 'Unknown Supplier',
+      supplierName: supplier?.name || "Unknown Supplier",
     };
 
     if (isEditing && existingMedicine) {
-      const updated: Medicine = {
-        ...existingMedicine,
-        ...medicineData,
-        updatedAt: new Date().toISOString(),
-      };
-      await dispatch(updateMedicine(updated));
+      await dispatch(
+        updateMedicine({ id: existingMedicine.id, data: medicineData }),
+      );
       toast({
-        title: 'Medicine updated',
-        description: 'The medicine has been updated successfully.',
+        title: "Medicine updated",
+        description: "The medicine has been updated successfully.",
       });
     } else {
       await dispatch(addMedicine(medicineData));
       toast({
-        title: 'Medicine added',
-        description: 'The new medicine has been added to inventory.',
+        title: "Medicine added",
+        description: "The new medicine has been added to inventory.",
       });
     }
-    navigate('/medicines');
+    navigate("/medicines");
   };
 
   return (
@@ -119,12 +120,12 @@ const MedicineFormPage = () => {
 
         <div className="mb-8">
           <h1 className="page-title">
-            {isEditing ? 'Edit Medicine' : 'Add New Medicine'}
+            {isEditing ? "Edit Medicine" : "Add New Medicine"}
           </h1>
           <p className="text-muted-foreground mt-1">
             {isEditing
-              ? 'Update the medicine details below'
-              : 'Fill in the details to add a new medicine'}
+              ? "Update the medicine details below"
+              : "Fill in the details to add a new medicine"}
           </p>
         </div>
 
@@ -137,11 +138,13 @@ const MedicineFormPage = () => {
                 <Input
                   id="name"
                   placeholder="e.g., Paracetamol 500mg"
-                  {...register('name', { required: 'Name is required' })}
-                  className={errors.name ? 'border-destructive' : ''}
+                  {...register("name", { required: "Name is required" })}
+                  className={errors.name ? "border-destructive" : ""}
                 />
                 {errors.name && (
-                  <p className="text-destructive text-sm">{errors.name.message}</p>
+                  <p className="text-destructive text-sm">
+                    {errors.name.message}
+                  </p>
                 )}
               </div>
 
@@ -149,9 +152,15 @@ const MedicineFormPage = () => {
                 <Label htmlFor="category">Category *</Label>
                 <Select
                   value={watchedCategory}
-                  onValueChange={(value) => setValue('category', value)}
+                  onValueChange={(value) => setValue("category", value)}
                 >
-                  <SelectTrigger className={!watchedCategory && errors.category ? 'border-destructive' : ''}>
+                  <SelectTrigger
+                    className={
+                      !watchedCategory && errors.category
+                        ? "border-destructive"
+                        : ""
+                    }
+                  >
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -162,9 +171,16 @@ const MedicineFormPage = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <input type="hidden" {...register('category', { required: 'Category is required' })} />
+                <input
+                  type="hidden"
+                  {...register("category", {
+                    required: "Category is required",
+                  })}
+                />
                 {errors.category && (
-                  <p className="text-destructive text-sm">{errors.category.message}</p>
+                  <p className="text-destructive text-sm">
+                    {errors.category.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -175,11 +191,15 @@ const MedicineFormPage = () => {
                 <Input
                   id="batchNumber"
                   placeholder="e.g., PCM-2024-001"
-                  {...register('batchNumber', { required: 'Batch number is required' })}
-                  className={errors.batchNumber ? 'border-destructive' : ''}
+                  {...register("batchNumber", {
+                    required: "Batch number is required",
+                  })}
+                  className={errors.batchNumber ? "border-destructive" : ""}
                 />
                 {errors.batchNumber && (
-                  <p className="text-destructive text-sm">{errors.batchNumber.message}</p>
+                  <p className="text-destructive text-sm">
+                    {errors.batchNumber.message}
+                  </p>
                 )}
               </div>
 
@@ -188,11 +208,15 @@ const MedicineFormPage = () => {
                 <Input
                   id="expiryDate"
                   type="date"
-                  {...register('expiryDate', { required: 'Expiry date is required' })}
-                  className={errors.expiryDate ? 'border-destructive' : ''}
+                  {...register("expiryDate", {
+                    required: "Expiry date is required",
+                  })}
+                  className={errors.expiryDate ? "border-destructive" : ""}
                 />
                 {errors.expiryDate && (
-                  <p className="text-destructive text-sm">{errors.expiryDate.message}</p>
+                  <p className="text-destructive text-sm">
+                    {errors.expiryDate.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -205,15 +229,17 @@ const MedicineFormPage = () => {
                   type="number"
                   min="0"
                   placeholder="0"
-                  {...register('quantity', {
-                    required: 'Quantity is required',
-                    min: { value: 0, message: 'Quantity cannot be negative' },
+                  {...register("quantity", {
+                    required: "Quantity is required",
+                    min: { value: 0, message: "Quantity cannot be negative" },
                     valueAsNumber: true,
                   })}
-                  className={errors.quantity ? 'border-destructive' : ''}
+                  className={errors.quantity ? "border-destructive" : ""}
                 />
                 {errors.quantity && (
-                  <p className="text-destructive text-sm">{errors.quantity.message}</p>
+                  <p className="text-destructive text-sm">
+                    {errors.quantity.message}
+                  </p>
                 )}
               </div>
 
@@ -225,15 +251,17 @@ const MedicineFormPage = () => {
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  {...register('purchasePrice', {
-                    required: 'Purchase price is required',
-                    min: { value: 0, message: 'Price cannot be negative' },
+                  {...register("purchasePrice", {
+                    required: "Purchase price is required",
+                    min: { value: 0, message: "Price cannot be negative" },
                     valueAsNumber: true,
                   })}
-                  className={errors.purchasePrice ? 'border-destructive' : ''}
+                  className={errors.purchasePrice ? "border-destructive" : ""}
                 />
                 {errors.purchasePrice && (
-                  <p className="text-destructive text-sm">{errors.purchasePrice.message}</p>
+                  <p className="text-destructive text-sm">
+                    {errors.purchasePrice.message}
+                  </p>
                 )}
               </div>
 
@@ -245,15 +273,17 @@ const MedicineFormPage = () => {
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  {...register('sellingPrice', {
-                    required: 'Selling price is required',
-                    min: { value: 0, message: 'Price cannot be negative' },
+                  {...register("sellingPrice", {
+                    required: "Selling price is required",
+                    min: { value: 0, message: "Price cannot be negative" },
                     valueAsNumber: true,
                   })}
-                  className={errors.sellingPrice ? 'border-destructive' : ''}
+                  className={errors.sellingPrice ? "border-destructive" : ""}
                 />
                 {errors.sellingPrice && (
-                  <p className="text-destructive text-sm">{errors.sellingPrice.message}</p>
+                  <p className="text-destructive text-sm">
+                    {errors.sellingPrice.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -262,9 +292,15 @@ const MedicineFormPage = () => {
               <Label htmlFor="supplierId">Supplier *</Label>
               <Select
                 value={watchedSupplier}
-                onValueChange={(value) => setValue('supplierId', value)}
+                onValueChange={(value) => setValue("supplierId", value)}
               >
-                <SelectTrigger className={!watchedSupplier && errors.supplierId ? 'border-destructive' : ''}>
+                <SelectTrigger
+                  className={
+                    !watchedSupplier && errors.supplierId
+                      ? "border-destructive"
+                      : ""
+                  }
+                >
                   <SelectValue placeholder="Select supplier" />
                 </SelectTrigger>
                 <SelectContent>
@@ -275,9 +311,16 @@ const MedicineFormPage = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <input type="hidden" {...register('supplierId', { required: 'Supplier is required' })} />
+              <input
+                type="hidden"
+                {...register("supplierId", {
+                  required: "Supplier is required",
+                })}
+              />
               {errors.supplierId && (
-                <p className="text-destructive text-sm">{errors.supplierId.message}</p>
+                <p className="text-destructive text-sm">
+                  {errors.supplierId.message}
+                </p>
               )}
             </div>
           </div>
@@ -299,7 +342,7 @@ const MedicineFormPage = () => {
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  {isEditing ? 'Update Medicine' : 'Add Medicine'}
+                  {isEditing ? "Update Medicine" : "Add Medicine"}
                 </>
               )}
             </Button>
