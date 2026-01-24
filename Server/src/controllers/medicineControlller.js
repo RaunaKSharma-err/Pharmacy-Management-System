@@ -7,6 +7,7 @@ exports.createMedicine = async (req, res) => {
 
 exports.getMedicines = async (req, res) => {
   const medicines = await Medicine.find().populate("supplier");
+  console.log(medicines);
   res.json(medicines);
 };
 

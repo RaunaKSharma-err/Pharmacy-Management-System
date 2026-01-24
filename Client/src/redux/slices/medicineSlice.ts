@@ -42,10 +42,11 @@ const initialState: MedicineState = {
 };
 
 export const fetchMedicines = createAsyncThunk(
-  'medicines/fetchAll',
+  'medicines/',
   async (_, { rejectWithValue }) => {
     try {
       const response = await medicinesAPI.getAll();
+      console.log(response.data);
       return response.data.medicines || response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Failed to fetch medicines';

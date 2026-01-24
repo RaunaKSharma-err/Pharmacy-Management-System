@@ -1,10 +1,10 @@
-import { ReactNode, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sidebar } from './Sidebar';
-import { TopNavbar } from './TopNavbar';
-import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { setUser } from '@/redux/slices/authSlice';
+import { ReactNode, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sidebar } from "./Sidebar";
+import { TopNavbar } from "./TopNavbar";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks";
+import { setUser, fetchCurrentUser } from "@/redux/slices/authSlice";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -18,21 +18,20 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { sidebarCollapsed } = useAppSelector((state) => state.ui);
 
   useEffect(() => {
-    // Check for stored user on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser && !isAuthenticated) {
-      try {
-        dispatch(setUser(JSON.parse(storedUser)));
-      } catch {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-      }
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      // Verify token and fetch current user from server
+      dispatch(fetchCurrentUser())
+        .unwrap()
+        .catch(() => {
+          // Token is invalid, redirect to login
+          navigate("/login");
+        });
+    } else if (!isAuthenticated) {
+      navigate("/login");
     }
-    
-    if (!isAuthenticated && !storedUser) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate, dispatch]);
+  }, [dispatch, navigate, isAuthenticated]);
 
   if (!isAuthenticated) {
     return null;
@@ -41,7 +40,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex min-h-screen w-full bg-background">
       <Sidebar />
-      <div className={`flex flex-col flex-1 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+      <div
+        className={`flex flex-col flex-1 transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}
+      >
         <TopNavbar />
         <main className="flex-1 overflow-auto custom-scrollbar">
           <AnimatePresence mode="wait">

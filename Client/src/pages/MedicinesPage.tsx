@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Plus,
   Search,
@@ -9,18 +9,23 @@ import {
   Trash2,
   MoreHorizontal,
   Pill,
-} from 'lucide-react';
-import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { deleteMedicine, setFilters } from '@/redux/slices/medicineSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "lucide-react";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks";
+import {
+  deleteMedicine,
+  setFilters,
+  fetchMedicines,
+} from "@/redux/slices/medicineSlice";
+import { LoadingSpinner } from "@/components/ui/loading";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -28,13 +33,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,43 +49,52 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { StatusBadge, getStockStatus } from '@/components/ui/status-badge';
-import { toast } from '@/hooks/use-toast';
+} from "@/components/ui/alert-dialog";
+import { StatusBadge, getStockStatus } from "@/components/ui/status-badge";
+import { toast } from "@/hooks/use-toast";
 
 const categories = [
-  'All',
-  'Pain Relief',
-  'Antibiotics',
-  'Gastrointestinal',
-  'Diabetes',
-  'Allergy',
-  'Cardiovascular',
+  "All",
+  "Pain Relief",
+  "Antibiotics",
+  "Gastrointestinal",
+  "Diabetes",
+  "Allergy",
+  "Cardiovascular",
 ];
 
 const MedicinesPage = () => {
   const dispatch = useAppDispatch();
-  const { medicines, filters } = useAppSelector((state) => state.medicines);
+  const { medicines, filters, isLoading } = useAppSelector(
+    (state) => state.medicines,
+  );
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Fetch medicines on mount
+  useEffect(() => {
+    dispatch(fetchMedicines());
+  }, [dispatch]);
 
   // Filtered medicines
   const filteredMedicines = useMemo(() => {
     return medicines.filter((medicine) => {
       const matchesSearch =
         medicine.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        medicine.batchNumber.toLowerCase().includes(filters.search.toLowerCase());
+        medicine.batchNumber
+          .toLowerCase()
+          .includes(filters.search.toLowerCase());
 
       const matchesCategory =
-        filters.category === 'all' ||
-        filters.category === '' ||
+        filters.category === "all" ||
+        filters.category === "" ||
         medicine.category === filters.category;
 
       const status = getStockStatus(medicine.quantity, medicine.expiryDate);
       const matchesStatus =
-        filters.stockStatus === 'all' ||
-        (filters.stockStatus === 'low' && status === 'low-stock') ||
-        (filters.stockStatus === 'expired' && status === 'expired') ||
-        (filters.stockStatus === 'in-stock' && status === 'in-stock');
+        filters.stockStatus === "all" ||
+        (filters.stockStatus === "low" && status === "low-stock") ||
+        (filters.stockStatus === "expired" && status === "expired") ||
+        (filters.stockStatus === "in-stock" && status === "in-stock");
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -90,12 +104,20 @@ const MedicinesPage = () => {
     if (deleteId) {
       await dispatch(deleteMedicine(deleteId));
       toast({
-        title: 'Medicine deleted',
-        description: 'The medicine has been removed from inventory.',
+        title: "Medicine deleted",
+        description: "The medicine has been removed from inventory.",
       });
       setDeleteId(null);
     }
   };
+
+  if (isLoading && medicines.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <LoadingSpinner className="w-12 h-12" />
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">
@@ -131,9 +153,9 @@ const MedicinesPage = () => {
           />
         </div>
         <Select
-          value={filters.category || 'all'}
+          value={filters.category || "all"}
           onValueChange={(value) =>
-            dispatch(setFilters({ category: value === 'all' ? '' : value }))
+            dispatch(setFilters({ category: value === "all" ? "" : value }))
           }
         >
           <SelectTrigger className="w-full sm:w-48">
@@ -142,7 +164,7 @@ const MedicinesPage = () => {
           </SelectTrigger>
           <SelectContent>
             {categories.map((cat) => (
-              <SelectItem key={cat} value={cat === 'All' ? 'all' : cat}>
+              <SelectItem key={cat} value={cat === "All" ? "all" : cat}>
                 {cat}
               </SelectItem>
             ))}
@@ -150,7 +172,7 @@ const MedicinesPage = () => {
         </Select>
         <Select
           value={filters.stockStatus}
-          onValueChange={(value: any) =>
+          onValueChange={(value) =>
             dispatch(setFilters({ stockStatus: value }))
           }
         >
@@ -182,14 +204,21 @@ const MedicinesPage = () => {
               <TableHead className="font-semibold">Expiry</TableHead>
               <TableHead className="font-semibold text-center">Qty</TableHead>
               <TableHead className="font-semibold text-right">Price</TableHead>
-              <TableHead className="font-semibold text-center">Status</TableHead>
-              <TableHead className="font-semibold text-right">Actions</TableHead>
+              <TableHead className="font-semibold text-center">
+                Status
+              </TableHead>
+              <TableHead className="font-semibold text-right">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredMedicines.length > 0 ? (
               filteredMedicines.map((medicine, index) => {
-                const status = getStockStatus(medicine.quantity, medicine.expiryDate);
+                const status = getStockStatus(
+                  medicine.quantity,
+                  medicine.expiryDate,
+                );
                 return (
                   <motion.tr
                     key={medicine.id}
@@ -274,8 +303,8 @@ const MedicinesPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Medicine</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this medicine? This action cannot be
-              undone.
+              Are you sure you want to delete this medicine? This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
