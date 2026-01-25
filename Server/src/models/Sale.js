@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const saleSchema = new mongoose.Schema(
   {
-    medicines: [
+    items: [
       {
         medicine: { type: mongoose.Schema.Types.ObjectId, ref: "Medicine" },
         quantity: Number,

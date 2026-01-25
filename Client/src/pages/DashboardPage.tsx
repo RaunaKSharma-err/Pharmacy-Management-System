@@ -1,8 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Pill,
-  TrendingUp,
   AlertTriangle,
   Calendar,
   DollarSign,
@@ -22,38 +21,19 @@ import {
 } from "recharts";
 import { useAppSelector, useAppDispatch } from "@/redux/hooks";
 import { fetchMedicines } from "@/redux/slices/medicineSlice";
+import { fetchSales } from "@/redux/slices/salesSlice";
 import { MetricCard, SimpleCard } from "@/components/ui/metric-card";
 import { StatusBadge, getStockStatus } from "@/components/ui/status-badge";
-import { LoadingSpinner } from "@/components/ui/loading";
-
-// Mock sales data for charts
-const dailySalesData = [
-  { day: "Mon", sales: 420 },
-  { day: "Tue", sales: 580 },
-  { day: "Wed", sales: 350 },
-  { day: "Thu", sales: 720 },
-  { day: "Fri", sales: 890 },
-  { day: "Sat", sales: 1100 },
-  { day: "Sun", sales: 680 },
-];
-
-const monthlySalesData = [
-  { month: "Jan", sales: 12400 },
-  { month: "Feb", sales: 15800 },
-  { month: "Mar", sales: 14200 },
-  { month: "Apr", sales: 18600 },
-  { month: "May", sales: 21300 },
-  { month: "Jun", sales: 19800 },
-];
 
 const DashboardPage = () => {
   const dispatch = useAppDispatch();
-  const { medicines, isLoading } = useAppSelector((state) => state.medicines);
-  const { todaySales } = useAppSelector((state) => state.sales);
+  const { medicines } = useAppSelector((state) => state.medicines);
+  const { sales, todaySales } = useAppSelector((state) => state.sales);
 
-  // Fetch medicines on mount
+  // Fetch data on mount
   useEffect(() => {
     dispatch(fetchMedicines());
+    dispatch(fetchSales());
   }, [dispatch]);
 
   // Calculate stats
@@ -64,6 +44,69 @@ const DashboardPage = () => {
   const expiredCount = medicines.filter(
     (m) => new Date(m.expiryDate) < new Date(),
   ).length;
+
+  // Generate weekly sales data from actual sales
+  const weeklySalesData = useMemo(() => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const today = new Date();
+    const weekData: { day: string; sales: number }[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dayName = days[date.getDay()];
+
+      const daySales = sales
+        .filter((sale) => {
+          const saleDate = new Date(sale.createdAt);
+          return saleDate.toDateString() === date.toDateString();
+        })
+        .reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+      weekData.push({ day: dayName, sales: daySales });
+    }
+
+    return weekData;
+  }, [sales]);
+
+  // Generate monthly sales data from actual sales
+  const monthlySalesData = useMemo(() => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const today = new Date();
+    const monthData: { month: string; sales: number }[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthName = months[date.getMonth()];
+
+      const monthSales = sales
+        .filter((sale) => {
+          const saleDate = new Date(sale.createdAt);
+          return (
+            saleDate.getMonth() === date.getMonth() &&
+            saleDate.getFullYear() === date.getFullYear()
+          );
+        })
+        .reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+      monthData.push({ month: monthName, sales: monthSales });
+    }
+
+    return monthData;
+  }, [sales]);
 
   // Get low stock medicines
   const lowStockMedicines = medicines
@@ -129,7 +172,7 @@ const DashboardPage = () => {
         <SimpleCard title="Weekly Sales" className="col-span-1">
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailySalesData}>
+              <AreaChart data={weeklySalesData}>
                 <defs>
                   <linearGradient
                     id="salesGradient"

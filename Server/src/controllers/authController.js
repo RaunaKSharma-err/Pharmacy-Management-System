@@ -16,13 +16,13 @@ exports.login = async (req, res) => {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
-  const token = (id) => {
+  const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
   };
 
-  res.json({ token, user });
+  res.json({ token: generateToken(user._id), user });
 };
 
 exports.me = async (req, res) => {

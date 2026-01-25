@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Search,
   Plus,
@@ -9,36 +9,45 @@ import {
   Receipt,
   Check,
   Pill,
-} from 'lucide-react';
-import { useAppSelector, useAppDispatch } from '@/redux/hooks';
+  Clock,
+} from "lucide-react";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks";
 import {
   addToCart,
   updateCartQuantity,
   removeFromCart,
   clearCart,
   createSale,
-} from '@/redux/slices/salesSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { SimpleCard } from '@/components/ui/metric-card';
+  fetchSales,
+} from "@/redux/slices/salesSlice";
+import { fetchMedicines } from "@/redux/slices/medicineSlice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SimpleCard } from "@/components/ui/metric-card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { toast } from '@/hooks/use-toast';
+} from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 
 const SalesPage = () => {
   const dispatch = useAppDispatch();
   const { medicines } = useAppSelector((state) => state.medicines);
-  const { cart, isLoading } = useAppSelector((state) => state.sales);
+  const { cart, sales, isLoading } = useAppSelector((state) => state.sales);
   const { user } = useAppSelector((state) => state.auth);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showBillModal, setShowBillModal] = useState(false);
   const [billGenerated, setBillGenerated] = useState(false);
+
+  // Fetch medicines and sales on mount
+  useEffect(() => {
+    dispatch(fetchMedicines());
+    dispatch(fetchSales());
+  }, [dispatch]);
 
   // Filter medicines based on search
   const filteredMedicines = useMemo(() => {
@@ -48,7 +57,7 @@ const SalesPage = () => {
         (m) =>
           m.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
           m.quantity > 0 &&
-          new Date(m.expiryDate) > new Date()
+          new Date(m.expiryDate) > new Date(),
       )
       .slice(0, 8);
   }, [medicines, searchQuery]);
@@ -58,15 +67,25 @@ const SalesPage = () => {
     return cart.reduce((sum, item) => sum + item.totalPrice, 0);
   }, [cart]);
 
+  // Get recent sales (last 10)
+  const recentSales = useMemo(() => {
+    return [...sales]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .slice(0, 10);
+  }, [sales]);
+
   const handleAddToCart = (medicine: (typeof medicines)[0]) => {
     const existingItem = cart.find((item) => item.medicineId === medicine.id);
     const currentQty = existingItem?.quantity || 0;
 
     if (currentQty >= medicine.quantity) {
       toast({
-        title: 'Insufficient stock',
+        title: "Insufficient stock",
         description: `Only ${medicine.quantity} units available.`,
-        variant: 'destructive',
+        variant: "destructive",
       });
       return;
     }
@@ -78,9 +97,9 @@ const SalesPage = () => {
         quantity: 1,
         unitPrice: medicine.sellingPrice,
         totalPrice: medicine.sellingPrice,
-      })
+      }),
     );
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleQuantityChange = (medicineId: string, newQuantity: number) => {
@@ -92,9 +111,9 @@ const SalesPage = () => {
     const medicine = medicines.find((m) => m.id === medicineId);
     if (medicine && newQuantity > medicine.quantity) {
       toast({
-        title: 'Insufficient stock',
+        title: "Insufficient stock",
         description: `Only ${medicine.quantity} units available.`,
-        variant: 'destructive',
+        variant: "destructive",
       });
       return;
     }
@@ -111,13 +130,13 @@ const SalesPage = () => {
       createSale({
         items: cart,
         totalAmount: cartTotal,
-        customerName: 'Walk-in Customer',
-        createdBy: user?.name || 'Staff',
-      })
+        customerName: "Walk-in Customer",
+        createdBy: user?.name || "Staff",
+      }),
     );
     setBillGenerated(true);
     toast({
-      title: 'Sale completed!',
+      title: "Sale completed!",
       description: `Bill of $${cartTotal.toFixed(2)} generated successfully.`,
     });
   };
@@ -173,7 +192,8 @@ const SalesPage = () => {
                     <div>
                       <p className="font-medium">{medicine.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Stock: {medicine.quantity} | ${medicine.sellingPrice.toFixed(2)}
+                        Stock: {medicine.quantity} | $
+                        {medicine.sellingPrice.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -217,7 +237,10 @@ const SalesPage = () => {
                           size="icon"
                           className="h-8 w-8"
                           onClick={() =>
-                            handleQuantityChange(item.medicineId, item.quantity - 1)
+                            handleQuantityChange(
+                              item.medicineId,
+                              item.quantity - 1,
+                            )
                           }
                         >
                           <Minus className="w-3 h-3" />
@@ -230,7 +253,10 @@ const SalesPage = () => {
                           size="icon"
                           className="h-8 w-8"
                           onClick={() =>
-                            handleQuantityChange(item.medicineId, item.quantity + 1)
+                            handleQuantityChange(
+                              item.medicineId,
+                              item.quantity + 1,
+                            )
                           }
                         >
                           <Plus className="w-3 h-3" />
@@ -247,7 +273,9 @@ const SalesPage = () => {
                         variant="ghost"
                         size="icon"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => dispatch(removeFromCart(item.medicineId))}
+                        onClick={() =>
+                          dispatch(removeFromCart(item.medicineId))
+                        }
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -323,17 +351,67 @@ const SalesPage = () => {
         </div>
       </div>
 
+      {/* Recent Sales Section */}
+      <SimpleCard title="Recent Sales" className="mt-6">
+        {recentSales.length > 0 ? (
+          <div className="space-y-3">
+            {recentSales.map((sale, index) => (
+              <motion.div
+                key={sale.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="p-4 bg-muted/30 rounded-lg"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-primary" />
+                    <span className="font-medium">
+                      {sale.customerName || "Walk-in Customer"}
+                    </span>
+                  </div>
+                  <span className="font-bold text-primary">
+                    ${sale.totalAmount.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex flex-wrap gap-2">
+                    {sale.items.map((item, i) => (
+                      <span
+                        key={i}
+                        className="bg-background px-2 py-0.5 rounded text-xs"
+                      >
+                        {item.medicineName} × {item.quantity}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{new Date(sale.createdAt).toLocaleString()}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Receipt className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground">No sales recorded yet.</p>
+          </div>
+        )}
+      </SimpleCard>
+
       {/* Bill Modal */}
       <Dialog open={showBillModal} onOpenChange={setShowBillModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center">
-              {billGenerated ? 'Sale Complete!' : 'Bill Preview'}
+              {billGenerated ? "Sale Complete!" : "Bill Preview"}
             </DialogTitle>
             <DialogDescription className="text-center">
               {billGenerated
-                ? 'The sale has been recorded successfully.'
-                : 'Review the bill before completing the sale.'}
+                ? "The sale has been recorded successfully."
+                : "Review the bill before completing the sale."}
             </DialogDescription>
           </DialogHeader>
 
@@ -354,7 +432,10 @@ const SalesPage = () => {
             <div className="space-y-4">
               <div className="bg-muted/30 rounded-lg p-4 space-y-3">
                 {cart.map((item) => (
-                  <div key={item.medicineId} className="flex justify-between text-sm">
+                  <div
+                    key={item.medicineId}
+                    className="flex justify-between text-sm"
+                  >
                     <span>
                       {item.medicineName} × {item.quantity}
                     </span>
@@ -383,7 +464,7 @@ const SalesPage = () => {
                   onClick={handleCompleteSale}
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Processing...' : 'Complete Sale'}
+                  {isLoading ? "Processing..." : "Complete Sale"}
                 </Button>
               </div>
             </div>

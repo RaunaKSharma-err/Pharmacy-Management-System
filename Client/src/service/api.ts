@@ -62,7 +62,7 @@ export const salesAPI = {
   getAll: () => api.get('/sales'),
   getById: (id: string) => api.get(`/sales/${id}`),
   create: (data) => api.post('/sales', data),
-  getDaily: () => api.get('/sales/daily'),
+  getDaily: () => api.get('/sales'),
   getMonthly: () => api.get('/sales/monthly'),
 };
 
