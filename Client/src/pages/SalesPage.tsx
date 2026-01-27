@@ -147,6 +147,8 @@ const SalesPage = () => {
     dispatch(clearCart());
   };
 
+  console.log(sales);
+
   return (
     <div className="page-container">
       {/* Header */}

@@ -3,6 +3,7 @@ import { Users, UserPlus, Shield, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SimpleCard } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
+import { useAppSelector } from '@/redux/hooks';
 
 const mockUsers = [
   { id: '1', name: 'John Pharmacist', email: 'john@pharmacy.com', role: 'admin' },
@@ -11,6 +12,7 @@ const mockUsers = [
 ];
 
 const UsersPage = () => {
+  const { user } = useAppSelector((state) => state.auth);
   return (
     <div className="page-container">
       <div className="page-header">

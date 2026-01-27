@@ -18,7 +18,7 @@ export const TopNavbar = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-
+  
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
