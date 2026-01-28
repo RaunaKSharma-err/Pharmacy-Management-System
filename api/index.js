@@ -9,10 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/medicines", require("./routes/medicineRoutes"));
-app.use("/api/sales", require("./routes/saleRoutes"));
-app.use("/api/suppliers", require("./routes/supplierRoutes"));
+app.use("/api/auth", require("../Server/src/routes/authRoutes"));
+app.use("/api/medicines", require("../Server/src/routes/medicineRoutes"));
+app.use("/api/sales", require("../Server/src/routes/saleRoutes"));
+app.use("/api/suppliers", require("../Server/src/routes/supplierRoutes"));
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Good Health" });
