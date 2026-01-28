@@ -14,8 +14,10 @@ app.use("/api/medicines", require("./routes/medicineRoutes"));
 app.use("/api/sales", require("./routes/saleRoutes"));
 app.use("/api/suppliers", require("./routes/supplierRoutes"));
 
-app.get("/api/test", (req, res) => {
-  res.json({ ok: true });
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Good Health" });
 });
 
-module.exports = app;
+app.listen(process.env.PORT, () => {
+  console.log(`Server is running on port ${process.env.PORT}`);
+});
